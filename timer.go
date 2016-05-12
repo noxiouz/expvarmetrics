@@ -1,8 +1,6 @@
 package expvarmetrics
 
 import (
-	"bytes"
-	"encoding/json"
 	"expvar"
 	"time"
 
@@ -10,8 +8,7 @@ import (
 )
 
 var (
-	requestedPercentiles            = []float64{0.5, 0.75, 0.9, 0.95, 0.98, 0.99, 0.9995}
-	_                    expvar.Var = TimerVar{}
+	_ expvar.Var = TimerVar{}
 )
 
 // TimerVar adds expvar.Var interface to go-metrics.Timer
@@ -27,18 +24,12 @@ func NewTimerVar() TimerVar {
 }
 
 type timerStats struct {
-	Sum   int64     `json:"sum"`
-	Min   int64     `json:"min"`
-	Max   int64     `json:"max"`
-	Mean  float64   `json:"mean"`
-	Rate  rateStats `json:"rate"`
-	Q50   float64   `json:"50%"`
-	Q75   float64   `json:"75%"`
-	Q90   float64   `json:"90%"`
-	Q95   float64   `json:"95%"`
-	Q98   float64   `json:"98%"`
-	Q99   float64   `json:"99%"`
-	Q9995 float64   `json:"99.95%"`
+	Sum        int64           `json:"sum"`
+	Min        int64           `json:"min"`
+	Max        int64           `json:"max"`
+	Mean       float64         `json:"mean"`
+	Rate       rateStats       `json:"rate"`
+	Percentile percentileStats `json:"percentile"`
 }
 
 func (t TimerVar) String() string {
@@ -46,7 +37,8 @@ func (t TimerVar) String() string {
 	percentiles := ss.Percentiles(requestedPercentiles)
 	norm := int64(time.Millisecond)
 	normf := float64(norm)
-	var st = timerStats{
+	var stat = timerStats{
+		Sum:  ss.Sum() / norm,
 		Min:  ss.Min() / norm,
 		Max:  ss.Max() / norm,
 		Mean: ss.Mean() / normf,
@@ -56,17 +48,16 @@ func (t TimerVar) String() string {
 			Rate15:   ss.Rate15(),
 			RateMean: ss.RateMean(),
 		},
-		Sum:   ss.Sum() / norm,
-		Q50:   percentiles[0] / normf,
-		Q75:   percentiles[1] / normf,
-		Q90:   percentiles[2] / normf,
-		Q95:   percentiles[3] / normf,
-		Q98:   percentiles[4] / normf,
-		Q99:   percentiles[5] / normf,
-		Q9995: percentiles[6] / normf,
+		Percentile: percentileStats{
+			Q50:   percentiles[0] / normf,
+			Q75:   percentiles[1] / normf,
+			Q90:   percentiles[2] / normf,
+			Q95:   percentiles[3] / normf,
+			Q98:   percentiles[4] / normf,
+			Q99:   percentiles[5] / normf,
+			Q9995: percentiles[6] / normf,
+		},
 	}
 
-	buff := new(bytes.Buffer)
-	json.NewEncoder(buff).Encode(&st)
-	return buff.String()
+	return toString(&stat)
 }

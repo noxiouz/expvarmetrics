@@ -1,14 +1,14 @@
 package expvarmetrics
 
 import (
-	"bytes"
-	"encoding/json"
 	"expvar"
 
 	"github.com/rcrowley/go-metrics"
 )
 
 var (
+	requestedPercentiles = []float64{0.5, 0.75, 0.9, 0.95, 0.98, 0.99, 0.9995}
+
 	_ expvar.Var = &MeterVar{}
 )
 
@@ -41,7 +41,5 @@ func (m MeterVar) String() string {
 		},
 	}
 
-	buff := new(bytes.Buffer)
-	json.NewEncoder(buff).Encode(&stats)
-	return buff.String()
+	return toString(&stats)
 }

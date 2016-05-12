@@ -1,2 +1,2 @@
 # expvarmetrics
-expvar.Var wrappers for github.com/rcrowley/go-metrics
+expvar.Var wrappers for [go-metrics](https://github.com/rcrowley/go-metrics)
